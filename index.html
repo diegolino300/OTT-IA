@@ -1,0 +1,211 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ott - Organizador Tecnológico de Tareas</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #1c1e22;
+            color: #e0e0e0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Menú lateral */
+        .sidebar {
+            width: 250px;
+            background-color: #2a2c33;
+            padding: 20px;
+            position: fixed;
+            height: 100%;
+            overflow-y: auto;
+            border-right: 1px solid #3a3c44;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #35c759;
+            margin-bottom: 30px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            margin: 15px 0;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            color: #e0e0e0;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #35c759;
+            color: #1c1e22;
+        }
+
+        .sidebar .material-icons {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        /* Contenido principal */
+        .main-content {
+            margin-left: 250px;
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        /* Barra de búsqueda */
+        .search-bar {
+            background-color: #2a2c33;
+            padding: 10px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            max-width: 600px;
+            margin: 20px auto;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-bar input {
+            background: none;
+            border: none;
+            color: #e0e0e0;
+            flex-grow: 1;
+            padding: 10px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        .search-bar .material-icons {
+            color: #35c759;
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        /* Secciones */
+        .section {
+            background-color: #24262b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #35c759;
+        }
+
+        .section p {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menú lateral -->
+    <div class="sidebar">
+        <div class="logo">ott</div>
+        <ul>
+            <li><a href="#tareas"><span class="material-icons">task_alt</span>Tareas</a></li>
+            <li><a href="#calendario"><span class="material-icons">calendar_today</span>Calendario</a></li>
+            <li><a href="#inteligencias"><span class="material-icons">smart_toy</span>Inteligencias Artificiales</a></li>
+            <li><a href="#archivos"><span class="material-icons">folder_open</span>Archivos & Explicaciones</a></li>
+            <li><a href="#configuracion"><span class="material-icons">settings</span>Configuración</a></li>
+        </ul>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <!-- Barra de búsqueda -->
+        <div class="search-bar">
+            <span class="material-icons">search</span>
+            <input type="text" placeholder="Buscar en ott...">
+        </div>
+
+        <!-- Secciones de ejemplo -->
+        <div class="section" id="tareas">
+            <h2>Tareas</h2>
+            <p>Administra tus tareas pendientes aquí.</p>
+        </div>
+        <div class="section" id="calendario">
+            <h2>Calendario</h2>
+            <p>Visualiza y organiza tus eventos.</p>
+        </div>
+        <div class="section" id="inteligencias">
+            <h2>Inteligencias Artificiales</h2>
+            <p>Explora herramientas de IA para optimizar tu trabajo.</p>
+        </div>
+        <div class="section" id="archivos">
+            <h2>Archivos & Explicaciones</h2>
+            <p>Accede a tus archivos y documentación.</p>
+        </div>
+        <div class="section" id="configuracion">
+            <h2>Configuración</h2>
+            <p>Personaliza tu experiencia en ott.</p>
+        </div>
+    </div>
+</body>
+</html>
